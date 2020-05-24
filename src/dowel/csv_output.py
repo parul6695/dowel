@@ -43,16 +43,17 @@ class CsvOutput(FileOutput):
                               
              #save the old file logs in a variable
                 with open(self._log_file.name) as log_in_csv:
-                    old_data = csv.DictReader(log_in_csv)
+                    #storing all old data in list
+                    old_data = list(csv.DictReader(log_in_csv))
                     #update the fieldnames dictionary with additional keys
                     self._fieldnames.update(set(to_csv.keys()))
                     #update the writer object with new fieldnames
                     self._writer = csv.DictWriter(self._log_file,fieldnames=self._fieldnames,extrasaction='raise')
                     #make the pointer points to start of the file to begin overwriting
                     self._log_file.seek(0)
-                    self._writer = self.csvwriter(self._log_file, self._fieldnames, 'ignore', True)
+                    
                     #start updating the file
-
+                    self._writer.writeheader()
                     for d in old_data:
                         self._writer.writerow(d)
 
@@ -65,14 +66,7 @@ class CsvOutput(FileOutput):
         else:
             raise ValueError('Unacceptable type.')
 
-    def csvwriter (self, filename, fieldnames,extrasaction,writeheader):
-        writer = csv.DictWriter(
-            filename,
-            fieldnames = fieldnames,
-            extrasaction = extrasaction)
-        if writeheader:
-            self._writer.writeheader()
-        return writer
+    
 
     def _warn(self, msg):
         """Warns the user using warnings.warn.

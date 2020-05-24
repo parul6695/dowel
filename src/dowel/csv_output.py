@@ -1,4 +1,3 @@
-"""A `dowel.logger.LogOutput` for CSV files."""
 import csv
 import warnings
 
@@ -9,7 +8,6 @@ from dowel.utils import colorize
 
 class CsvOutput(FileOutput):
     """CSV file output for logger.
-
     :param file_name: The file this output should log to.
     """
 
@@ -42,12 +40,24 @@ class CsvOutput(FileOutput):
                 self._writer.writeheader()
 
             if to_csv.keys() != self._fieldnames:
-                self._warn('Inconsistent TabularInput keys detected. '
-                           'CsvOutput keys: {}. '
-                           'TabularInput keys: {}. '
-                           'Did you change key sets after your first '
-                           'logger.log(TabularInput)?'.format(
-                               set(self._fieldnames), set(to_csv.keys())))
+                              
+             #save the old file logs in a variable
+                with open(self._log_file.name) as log_in_csv:
+                    #storing all old data in list
+                    old_data = list(csv.DictReader(log_in_csv))
+                    #update the fieldnames dictionary with additional keys
+                    self._fieldnames.update(set(to_csv.keys()))
+                    #update the writer object with new fieldnames
+                    self._writer = csv.DictWriter(self._log_file,fieldnames=self._fieldnames,extrasaction='raise')
+                    #make the pointer points to start of the file to begin overwriting
+                    self._log_file.seek(0)
+                    
+                    #start updating the file
+                    self._writer.writeheader()
+                    for d in old_data:
+                        self._writer.writerow(d)
+
+                
 
             self._writer.writerow(to_csv)
 
@@ -56,9 +66,10 @@ class CsvOutput(FileOutput):
         else:
             raise ValueError('Unacceptable type.')
 
+    
+
     def _warn(self, msg):
         """Warns the user using warnings.warn.
-
         The stacklevel parameter needs to be 3 to ensure the call to logger.log
         is the one printed.
         """
@@ -77,3 +88,7 @@ class CsvOutputWarning(UserWarning):
     """Warning class for CsvOutput."""
 
     pass
+
+
+
+
